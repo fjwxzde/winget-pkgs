@@ -31,11 +31,11 @@ jobs:
 
     - name: Upgrade All
       run: |
-        winget list
+        winget list --accept-source-agreements
         Write-Output "============================================="
         winget upgrade --all --accept-package-agreements --accept-source-agreements --source winget --force
         Write-Output "============================================="
-        winget list
+        winget list --accept-source-agreements
 
     - name: Get modified directories
       id: modified_dirs
@@ -94,5 +94,5 @@ jobs:
         $modifiedDirs = Get-Content -Path modified_dirs.txt
         foreach ($dir in $modifiedDirs) {
           winget install --manifest $dir --ignore-local-archive-malware-scan --accept-package-agreements --dependency-source winget --accept-source-agreements --force
-          winget list
+          winget list --accept-source-agreements
         }
