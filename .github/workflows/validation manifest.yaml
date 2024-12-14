@@ -1,0 +1,98 @@
+name: Validation Manifest Changes
+
+on:
+  workflow_dispatch:
+  pull_request: 
+    branches:
+      - "**"
+    types:
+        - "opened"
+        - "synchronize"
+        - "reopened"
+  push:
+    branches:
+      - "**"
+
+jobs:
+  Validation-Manifest:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Repo Code
+      uses: actions/checkout@v4
+
+    - name: Install winget
+      uses: Cyberboss/install-winget@v1
+
+    - name: Check winget and Enable LocalManifestFiles
+      run: |
+        winget settings --enable LocalManifestFiles
+        winget --info
+
+    - name: Upgrade All
+      run: |
+        winget list
+        Write-Output "============================================="
+        winget upgrade --all
+        Write-Output "============================================="
+        winget list
+
+    - name: Get modified directories
+      id: modified_dirs
+      # 获取最新提交的文件路径 > 提取修改的目录 > 提取目录路径 > 输出修改的目录
+      run: |
+        $modifiedFiles = git diff --name-only HEAD^ HEAD
+        
+        $modifiedDirs = $modifiedFiles | ForEach-Object {
+
+        $_.Substring(0, $_.LastIndexOf('\'))
+        } | Sort-Object -Unique
+        
+        Write-Host "Modified directories: $modifiedDirs"
+        $modifiedDirs -join "," | Out-File -FilePath modified_dirs.txt
+
+    - name: Check if modified directories exist
+      id: check_dirs
+      # 读取上一步中输出的目录列表 > 变量来标记是否有目录不存在 > 检查每个修改的目录是否存在 > 如果有目录不存在，设置输出标记 > 如果有目录不存在，设置输出标记
+      run: |
+        $modifiedDirs = Get-Content -Path modified_dirs.txt
+
+        $anyDirectoryMissing = $false
+
+        foreach ($dir in $modifiedDirs) {
+          if (Test-Path -Path $dir -PathType Container) {
+            Write-Host "Directory '$dir' exists."
+          } else {
+            Write-Host "Directory '$dir' does not exist."
+            $anyDirectoryMissing = $true
+          }
+        }
+
+        if ($anyDirectoryMissing) {
+          Write-Host "One or more directories do not exist, skipping subsequent steps."
+          echo "skip=true" >> $GITHUB_ENV
+        }
+
+    - name: Skipped workflow
+      if: env.skip == 'true'
+      run: |
+        echo "Looks like this is a removal manifest mod, good job!"
+
+    - name: Validate Manifest
+      if: env.skip != 'true'
+      run: |
+        echo "All directories exist. Proceeding with the next steps."
+        $modifiedDirs = Get-Content -Path modified_dirs.txt
+        foreach ($dir in $modifiedDirs) {
+          winget validate --manifest $dir
+        }
+
+    - name: Test Install
+      if: env.skip != 'true'
+      run: |
+        echo "All directories exist. Proceeding with the next steps."
+        $modifiedDirs = Get-Content -Path modified_dirs.txt
+        foreach ($dir in $modifiedDirs) {
+          winget install --manifest $dir
+          winget list
+        }
