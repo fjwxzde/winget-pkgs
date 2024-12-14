@@ -29,13 +29,14 @@ jobs:
         winget settings --enable LocalManifestFiles
         winget --info
 
-    - name: Upgrade All
-      run: |
-        winget list --accept-source-agreements
-        Write-Output "============================================="
-        winget upgrade --all --accept-package-agreements --accept-source-agreements --source winget --force --include-unknown
-        Write-Output "============================================="
-        winget list --accept-source-agreements
+    #- name: Upgrade All
+    #  # 为了减少运行时间而注释掉
+    #  run: |
+    #    winget list --accept-source-agreements
+    #    Write-Output "============================================="
+    #    winget upgrade --all --accept-package-agreements --accept-source-agreements --source winget --force --include-unknown
+    #    Write-Output "============================================="
+    #    winget list --accept-source-agreements
 
     - name: Get modified directories
       id: modified_dirs
