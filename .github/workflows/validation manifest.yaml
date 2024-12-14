@@ -33,7 +33,7 @@ jobs:
       run: |
         winget list
         Write-Output "============================================="
-        winget upgrade --all
+        winget upgrade --all --accept-package-agreements --accept-source-agreements --source winget --force
         Write-Output "============================================="
         winget list
 
@@ -93,6 +93,6 @@ jobs:
         echo "All directories exist. Proceeding with the next steps."
         $modifiedDirs = Get-Content -Path modified_dirs.txt
         foreach ($dir in $modifiedDirs) {
-          winget install --manifest $dir
+          winget install --manifest $dir --ignore-local-archive-malware-scan --accept-package-agreements --dependency-source winget --accept-source-agreements --force
           winget list
         }
