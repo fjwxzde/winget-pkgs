@@ -33,7 +33,7 @@ jobs:
       run: |
         winget list --accept-source-agreements
         Write-Output "============================================="
-        winget upgrade --all --accept-package-agreements --accept-source-agreements --source winget --force
+        winget upgrade --all --accept-package-agreements --accept-source-agreements --source winget --force --include-unknown
         Write-Output "============================================="
         winget list --accept-source-agreements
 
